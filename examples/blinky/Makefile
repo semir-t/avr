@@ -23,7 +23,7 @@ SRCS = main.c
 SRCS +=
 
 # Defining core configuration for your project (add SPI, USART, DELAY etc.)
-CORE_SOURCE_DIR = ../../lib/core_atmega328p/
+CORE_SOURCE_DIR = ../../lib/atmega328p_core/
 CORE_SOURCE_FILES = delay.c
 CORE_SOURCE = $(addprefix $(CORE_SOURCE_DIR), $(CORE_SOURCE_FILES))
 SRCS += $(CORE_SOURCE) 

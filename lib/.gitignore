@@ -6,3 +6,4 @@
 !/.gitignore
 ## Except these files
 !/atmega328p_core/
+!sg90_servo.*

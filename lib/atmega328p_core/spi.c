@@ -4,7 +4,7 @@ void spi_master_init(uint8_t prescaler)/*{{{*/
 {
   //Set CSK,SS & MOSI as output, everthing else is input
   //Set PB4(MISO) input
-  SPI_DDR |= _BV(SPI_MOSI) | _BV(SPI_SCK) | _BV(SPI_SSN);
+  SPI_DDR |= _BV(SPI_MOSI) | _BV(SPI_SCK) | _BV(SPI_SS);
   SPSR |= (prescaler >> 2) & 0x01; // set prescaler value
   SPCR |= (prescaler & 0x03); // set prescaler value
   

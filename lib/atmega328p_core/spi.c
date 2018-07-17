@@ -21,6 +21,17 @@ void spi_slave_init(void)/*{{{*/
   // sampling on rasing edge
   SPCR |=  _BV(SPE);
 }/*}}}*/
+void spi_baudrate(uint8_t prescaler)/*{{{*/
+{
+  SPCR &= ~_BV(SPE);
+  //clear previous value
+  SPSR &= ~(0x01);
+  SPCR &= ~(0x03);
+  //set new value
+  SPSR |= (prescaler >> 2) & 0x01; // set prescaler value
+  SPCR |= (prescaler & 0x03); // set prescaler value
+  SPCR |= _BV(SPE);
+}/*}}}*/
 
 void spi_tx_byte(uint8_t data)/*{{{*/
 {
@@ -31,7 +42,7 @@ void spi_tx_byte(uint8_t data)/*{{{*/
 }/*}}}*/
 uint8_t spi_rx_byte(void)/*{{{*/
 {
-  uint8_t data = 0;
+  uint8_t data = 0xff;
   SPDR = data; 
   while(!(SPSR & _BV(SPIF))); // wait while data is received 
   data = SPDR; // read SPI buffer & clear SPIF0 bit;
@@ -59,9 +70,29 @@ void spi_tx(uint8_t * data, uint8_t n_value)/*{{{*/
 void spi_rx(uint8_t * data, uint8_t n_value)/*{{{*/
 {
   uint8_t k = 0;
+  print("\nold: ");
+  for(k = 0; k < 10; ++k)
+  {
+    print(" %xb ",data[k]);
+  }
+  print("\nnew: ");
   for(k = 0; k < n_value ; ++k)
   {
     data[k] = spi_rx_byte();
+    if(k < 10)
+    {
+    print(" %xb ",data[k]);
+    }
   }
+  print("\n");
+}/*}}}*/
+void spi_rxtx(uint8_t * data, uint8_t n_value)/*{{{*/
+{
+  uint8_t k = 0;
+  for(k = 0; k < n_value ; ++k)
+  {
+    data[k] = spi_rxtx_byte(data[k]);
+  }
+
 }/*}}}*/
 

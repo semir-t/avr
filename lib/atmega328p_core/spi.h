@@ -117,5 +117,20 @@ void spi_tx(uint8_t * data, uint8_t n_value);
  */
 void spi_rx(uint8_t * data, uint8_t n_value);
 
+/*! \brief Send and Receive arbitrary number of data via SPI 
+ *
+ * \param data Array of data which will be sent is rewritten by received data
+ * \param n_value Number of elements to send/read via SPI 
+ * \return No return value 
+ */
+void spi_rxtx(uint8_t * data, uint8_t n_value);
+
+/*! \brief Change SPI baudrate speed 
+ *
+ * \param  prescaler New SPI baudrate value 
+ * \return No return value
+ */
+void spi_baudrate(uint8_t prescaler);
+
 
 #endif /* ifndef __SPI_H */

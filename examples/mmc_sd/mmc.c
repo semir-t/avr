@@ -30,7 +30,6 @@
 #define MMC_CMD55                                     (55)    /* APP_CMD */
 #define MMC_CMD58                                     (58)    /* READ_OCR */
 
-
 /* Card type flags (CardType) */
 #define CT_MMC				                            0x01	/* MMC ver 3 */
 #define CT_SD1				                            0x02	/* SD ver 1 */
@@ -43,14 +42,14 @@
 
 static void mmc_select(void)/*{{{*/
 {
-  SD_SS_HIGH;
+  MMC_SS_HIGH;
   spi_tx_byte(0xff);
-  SD_SS_LOW;
+  MMC_SS_LOW;
 }/*}}}*/
 static void mmc_deselect(void)/*{{{*/
 {
-  SD_SS_HIGH;
-  spi_tx_byte(0xff);
+  MMC_SS_HIGH;
+  /* spi_tx_byte(0xff); */
 }/*}}}*/
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -68,7 +67,7 @@ uint8_t mmc_init(void)/*{{{*/
   uint8_t k = 0;
   uint8_t status = 0x00;
   //Send 80 CLK pulses need to initialize SD card
-  SD_SS_HIGH; 
+  MMC_SS_HIGH; 
   print("SYS-> SEND 80 dummy CLK pulses --- ");
   for(k = 0; k < 10; ++k)
   {
@@ -136,10 +135,14 @@ uint8_t mmc_tx_command(uint8_t command, uint32_t arg, uint8_t crc)/*{{{*/
     status = sd_spi_rxtx_byte(0xff);
   }
   print("\t CMD [%xb]  --- status [%xb] \n",command,status);
+  /* if(command != MMC_CMD24) */
+  /* { */
   mmc_deselect();
+  /* } */
   print("\t SS_HIGH\n");
   return status;
 }/*}}}*/
+
 uint8_t mmc_read(uint32_t sector, uint8_t * buffer)/*{{{*/
 {
   uint8_t status = 0x00;
@@ -186,6 +189,63 @@ uint8_t mmc_read(uint32_t sector, uint8_t * buffer)/*{{{*/
   }
   return status;
 }/*}}}*/
+uint8_t mmc_write(uint32_t sector, uint8_t * buffer)
+{
+  uint8_t status = 0x00;
+  uint8_t r1 = 0xff;
+  uint16_t try_cnt = 0;
+
+  try_cnt = 10;
+  do
+  {
+    r1 = mmc_tx_command(MMC_CMD24,sector << 9,0xff);
+  } while((r1 != 0x00) && --try_cnt);
+  if(try_cnt == 0)
+  {
+    status = 0x01;
+  }
+  else
+  {
+    print("SYS-> SEND START TOKEN\n");
+    MMC_SS_LOW;
+    /* sd_spi_rxtx_byte(0xff); //Send start token */
+    /* mmc_select(); */
+    sd_spi_rxtx_byte(0xfe); //Send start token
+    print("SYS-> SEND DATA\n");
+    uint16_t k = 0;
+    for (k = 0; k < 512; ++k)
+    {
+      if((k % 8 == 0))
+      {
+        print("\n%d. ",k/8);
+      }
+      print(" %xb ",buffer[k]);
+      sd_spi_rxtx_byte(buffer[k]);
+    }
+    print("\n");
+    //Send dummy CRC bytes
+    print("SYS-> SEND DUMMY CRC\n");
+    sd_spi_rxtx_byte(0xff);
+    sd_spi_rxtx_byte(0xff);
+    r1 = sd_spi_rxtx_byte(0xff);
+    if((r1 & 0x1f) != 0x05)
+    {
+      print("CHECH WRITE DATA ERROR\n");
+      //READ_ONE_SECTOR_ERROR
+      status = 0x02;
+    }
+    print("SYS-> WAIT WHILE BUSY: ");
+    while(sd_spi_rxtx_byte(0xff) != 0xff)
+    {
+      print("*");
+    }
+    print("\n");
+    mmc_deselect();
+  }
+
+
+  return status;
+}
 
 
 

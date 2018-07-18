@@ -25,12 +25,38 @@ int main(void)
     print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
     print("SD CARD INITIALIZATION IS SUCCESSFUL\n");
     print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
-    print("READ SECTOR TEST\n");
+    print("WRITE SECTOR TEST\n");
     print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
     uint8_t buff[512];
-    if(mmc_read(0,buff) == 0)
+    uint16_t k = 0;
+    for(k = 0; k < 512;++k)
     {
-      print("SYS-> Read sector is successful\n");
+      buff[k] = k;
+    }
+    if(mmc_write(0x1be,buff) == 0)
+    {
+    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+    print("WRITE TO SECTOR IS SUCCESSFUL\n");
+    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+    }
+    else
+    {
+      print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+      print("WRITE TO SECTOR IS NOT SUCCESSFUL\n");
+      print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+    }
+    for(k = 0; k < 512;++k)
+    {
+      buff[k] = 0xff;
+    }
+    delay_ms(2000);
+    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+    print("READ SECTOR TEST\n");
+    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+    if(mmc_read(0x1be,buff) == 0)
+    {
+      print("READ FROM SECTOR IS SUCCESSFUL\n");
+      print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
       uint16_t k = 0;
       print("DATA:\n");
       for (k = 0; k < 512; ++k)
@@ -40,8 +66,13 @@ int main(void)
           print("\n");
         }
         print(" %xb ",buff[k]);
-     }
+      }
 
+    }
+    else
+    {
+      print("READ FROM SECTOR IS NOT SUCCESSFUL\n");
+      print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
     }
 
   }

@@ -239,7 +239,7 @@ uint8_t mmc_read(uint32_t sector, uint8_t * buffer)/*{{{*/
   try_cnt = 10;
   do
   {
-    command_status = mmc_tx_command(MMC_CMD17,sector << 9,0xff);
+    command_status = mmc_tx_command(MMC_CMD17,sector,0xff);
     --try_cnt;  
   } while((command_status != 0x00) && try_cnt);
 
@@ -303,7 +303,7 @@ uint8_t mmc_write(uint32_t sector, uint8_t * buffer)/*{{{*/
   try_cnt = 10;
   do
   {
-    r1 = mmc_tx_command(MMC_CMD24,sector << 9,0xff);
+    r1 = mmc_tx_command(MMC_CMD24,sector,0xff);
   } while((r1 != 0x00) && --try_cnt);
   if(try_cnt == 0)
   {

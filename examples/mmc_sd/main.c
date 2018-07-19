@@ -35,7 +35,7 @@ int main(void)
     {
       buff[k] = k;
     }
-    if(mmc_write(0x1be,buff) == 0)
+    if(mmc_write(0,buff) == 0)
     {
     print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
     print("WRITE TO SECTOR IS SUCCESSFUL\n");
@@ -55,7 +55,7 @@ int main(void)
     print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
     print("READ SECTOR TEST\n");
     print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
-    if(mmc_read(0x1be,buff) == 0)
+    if(mmc_read(0,buff) == 0)
     {
       print("READ FROM SECTOR IS SUCCESSFUL\n");
       print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");

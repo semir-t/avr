@@ -223,6 +223,19 @@ uint8_t mmc_read(uint32_t sector, uint8_t * buffer)/*{{{*/
   uint8_t command_status = 0xff;
   uint8_t try_cnt = 0;
 
+  /* if (!count) */
+  /* { */
+    /* print("RES_PARERR\n"); */
+    /* return RES_PARERR; */
+  /* } */
+  if (g_card_status & CARD_S_NO_INIT) 
+  {
+    status = CARD_E_NOT_READY;
+  }
+  if (!(g_card_type & CT_BLOCK))
+  {
+    sector = sector << 9;	/* Convert to byte address if needed (*512)*/
+  }
   try_cnt = 10;
   do
   {
@@ -233,7 +246,7 @@ uint8_t mmc_read(uint32_t sector, uint8_t * buffer)/*{{{*/
   if(try_cnt == 0)
   {
     //READ_ONE_SECTOR_ERROR
-    status = 0x01;
+    status = CARD_E_READ_DATA;
   }
   else
   {
@@ -246,7 +259,7 @@ uint8_t mmc_read(uint32_t sector, uint8_t * buffer)/*{{{*/
     if(try_cnt == 0)
     {
       //DATA CAN'T BE READ 
-      status = 0x02;
+      status = CARD_E_READ_DATA;
     }
     else
     {
@@ -269,6 +282,24 @@ uint8_t mmc_write(uint32_t sector, uint8_t * buffer)/*{{{*/
   uint8_t r1 = 0xff;
   uint16_t try_cnt = 0;
 
+  /* if (!count) */ 
+  /* { */
+  /* return RES_PARERR; */
+  /* } */
+  if (g_card_status & CARD_S_NO_INIT) 
+  {
+    /* return RES_NOTRDY; */
+    status = CARD_E_NOT_READY;
+  }
+  if (g_card_status & CARD_S_PROTECT )
+  {
+    /* return RES_WRPRT; */
+    status = CARD_E_WRITE_PROTECT;
+  }
+  if (!(g_card_type & CT_BLOCK))
+  {
+    sector *= 512;	/* Convert to byte address if needed */
+  }
   try_cnt = 10;
   do
   {
@@ -276,7 +307,7 @@ uint8_t mmc_write(uint32_t sector, uint8_t * buffer)/*{{{*/
   } while((r1 != 0x00) && --try_cnt);
   if(try_cnt == 0)
   {
-    status = 0x01;
+    status = CARD_E_WRITE_DATA;
   }
   else
   {
@@ -305,15 +336,13 @@ uint8_t mmc_write(uint32_t sector, uint8_t * buffer)/*{{{*/
     if((r1 & 0x1f) != 0x05)
     {
       //READ_ONE_SECTOR_ERROR
-      status = 0x02;
+      status = CARD_E_WRITE_DATA;
     }
     while(mmc_spi_rxtx_byte(0xff) != 0xff)
     {
     }
     mmc_deselect();
   }
-
-
   return status;
 }/*}}}*/
 

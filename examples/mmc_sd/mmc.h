@@ -27,6 +27,14 @@
 #define CARD_S_NO_DISK		                  0x02	/* No medium in the drive */
 #define CARD_S_PROTECT		                  0x04	/* Write protected */
 /*}}}*/
+/*{{{ SD error*/
+#define CARD_E_CLEAN                        0x00
+#define CARD_E_PARAMETER                    0x01
+#define CARD_E_NOT_READY                    0x02
+#define CARD_E_WRITE_PROTECT                0x03
+#define CARD_E_WRITE_DATA                   0x10
+#define CARD_E_READ_DATA                    0x20
+/*}}}*/
 #define MMC_DEBUG                         1
 
 uint8_t mmc_init(void);

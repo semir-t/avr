@@ -14,7 +14,9 @@ int main(void)
   print_init(usart_tx_byte);
   
 
-  if(mmc_init() != 0)
+  uint8_t r = mmc_init();
+  print("INIT %xb",r);
+  if(r != 0)
   {
     print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
     print("SD CARD INITIALIZATION IS NOT SUCCESSFUL\n");

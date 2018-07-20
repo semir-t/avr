@@ -34,16 +34,62 @@
 #define CARD_E_WRITE_PROTECT                0x03
 #define CARD_E_WRITE_DATA                   0x10
 #define CARD_E_READ_DATA                    0x20
+#define CARD_E_CXD                          0x40
 /*}}}*/
-#define MMC_DEBUG                         1
+#define MMC_DEBUG                         0
 
+/*! \brief Initialize arbitrary SD card 
+ *
+ *  Initialization is working for SDv1 and MMC cards.
+ * \return Return SD card status (g_card_status) 
+ */
 uint8_t mmc_init(void);
+
+/*! \brief Send command to SD card 
+ *
+ * \param command Command to send to SD card 
+ * \param arg Argument for the command 
+ * \param crc CRC value for used command and argument 
+ * \return SD card respond to command 
+ */
 uint8_t mmc_tx_command(uint8_t command, uint32_t arg, uint8_t crc);
 
+/*! \brief Read data from arbitrary number of SD card sectors 
+ *
+ * \param sector Start sector 
+ * \param buffer Buffer for storing data 
+ * \param cnt Number of sectors to read 
+ * \return Read status 
+ */
 uint8_t mmc_read(uint32_t sector, uint8_t * buffer,uint8_t cnt);
+
+/*! \brief Write data to arbitrary number of SD card sectors 
+ *
+ * \param sector Start sector 
+ * \param buffer Data buffer 
+ * \param cnt Number of sectors to write 
+ * \return Write status 
+ */
 uint8_t mmc_write(uint32_t sector, uint8_t * buffer, uint8_t cnt);
 
-uint8_t mmc(void);
+/*! \brief Get SD card status
+ *
+ * \return SD card status (g_card_status)
+ * */
+uint8_t mmc_status(void);
 
+/*! \brief Read CSD value 
+ *
+ * \param  csd Buffer to store CSD value 
+ * \return Read CSD status 
+ */
+uint8_t mmc_csd(uint8_t * csd);
+
+/*! \brief Read CID value 
+ *
+ * \param  cid Buffer to store CID value 
+ * \return Read CID status 
+ */
+uint8_t mmc_cid(uint8_t * cid);
 
 #endif /* ifndef __MMC_H */

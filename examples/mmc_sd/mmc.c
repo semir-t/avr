@@ -1,10 +1,5 @@
 #include "mmc.h"
 
-/*--------------------------------------------------------------------------
-
-  Module Private Functions
-
-  ---------------------------------------------------------------------------*/
 
 /*{{{ MMC/SD command (SPI mode)*/
 #define MMC_CMD0                                      (0)     /* GO_IDLE_STATE */
@@ -126,7 +121,6 @@ static uint8_t mmc_rx_datablock(uint8_t * buffer, uint8_t token)/*{{{*/
 {
 
   uint8_t status = 0x00;
-  uint8_t command_status = 0xff;
   uint8_t try_cnt = 100;
   //token 0xfe
   while (mmc_spi_rxtx_byte(0xff) != token && try_cnt)
@@ -149,8 +143,58 @@ static uint8_t mmc_rx_datablock(uint8_t * buffer, uint8_t token)/*{{{*/
     mmc_spi_rxtx_byte(0xff);
     mmc_spi_rxtx_byte(0xff);
   }
-
-  
+  return status;
+}/*}}}*/
+static uint8_t mmc_rx_cxd(uint8_t command, uint8_t * data)/*{{{*/
+{
+  uint8_t status = 0x00;
+  if (g_card_status & CARD_S_NO_INIT) 
+  {
+    status = CARD_E_NOT_READY;
+  }
+  if(status == 0x00)
+  {
+    uint8_t try_cnt = 10;
+    uint8_t command_status = 0x00;
+    do
+    {
+      command_status = mmc_tx_command(command,0x00,0xff);
+      --try_cnt;  
+    } while((command_status != 0x00) && try_cnt);
+    if(try_cnt == 0)
+    {
+      //READ_ONE_SECTOR_ERROR
+      status = CARD_E_CXD;
+    }
+    else
+    {
+      try_cnt = 100;
+      mmc_select();
+      while (mmc_spi_rxtx_byte(0xff) != 0xfe && try_cnt)
+      {
+        --try_cnt;
+      }
+      if(try_cnt == 0)
+      {
+        //DATA CAN'T BE READ 
+        status = CARD_E_CXD;
+      }
+      else
+      {
+        uint8_t k = 0;
+        for(k = 0; k < 16; ++k)
+        {
+          data[k] = mmc_spi_rxtx_byte(0xff);
+        }
+        while(mmc_spi_rxtx_byte(0xff) != 0xff)
+        {
+          //Wait while busy
+        }
+      }
+      mmc_deselect();
+    }
+  }
+  return status;
 }/*}}}*/
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -169,7 +213,6 @@ uint8_t mmc_init(void)/*{{{*/
 
   uint8_t k = 0;
   uint8_t card_type = CT_UNKNOWN;
-  uint8_t command_status[4];
 
   //Send 80 CLK pulses need to initialize SD card
   mmc_deselect();
@@ -195,6 +238,7 @@ uint8_t mmc_init(void)/*{{{*/
     {
 
     }
+    /* uint8_t command_status[4]; */
     /* if (mmc_tx_command(MMC_CMD8,0x1aa,0x87) != 1) */
     /* { */
     /* Is the card SDv2? */
@@ -296,8 +340,6 @@ uint8_t mmc_tx_command(uint8_t command, uint32_t arg, uint8_t crc)/*{{{*/
 uint8_t mmc_read(uint32_t sector, uint8_t * buffer, uint8_t cnt)/*{{{*/
 {
   uint8_t status = 0x00;
-  uint8_t command_status = 0xff;
-  uint8_t try_cnt = 0;
 
   if (!cnt)
   {
@@ -311,46 +353,48 @@ uint8_t mmc_read(uint32_t sector, uint8_t * buffer, uint8_t cnt)/*{{{*/
   {
     sector = sector << 9;	/* Convert to byte address if needed (*512)*/
   }
-  try_cnt = 10;
-  uint8_t command = cnt > 1 ? MMC_CMD18 : MMC_CMD17;
-  do
+  if(status == 0x00)
   {
-    command_status = mmc_tx_command(command,sector,0xff);
-    --try_cnt;  
-  } while((command_status != 0x00) && try_cnt);
-  if(try_cnt == 0)
-  {
-    //READ_ONE_SECTOR_ERROR
-    status = CARD_E_READ_DATA;
-  }
-  else
-  {
-    try_cnt = 100;
-    mmc_select();
+    uint8_t r1 = 0xff; 
+    uint8_t try_cnt = 0;
+    try_cnt = 10;
+    uint8_t command = cnt > 1 ? MMC_CMD18 : MMC_CMD17;
     do
     {
-      mmc_rx_datablock(buffer,0xfe);
-      buffer += 512;
-    }while(--cnt);
-    if (command == MMC_CMD18)
+      r1 = mmc_tx_command(command,sector,0xff);
+      --try_cnt;  
+    } while((r1 != 0x00) && try_cnt);
+    if(try_cnt == 0)
     {
-      mmc_tx_command(MMC_CMD12,0x00000000,0xff);	/* STOP_TRANSMISSION */
-      while(mmc_spi_rxtx_byte(0xff) != 0xff)
+      //READ_ONE_SECTOR_ERROR
+      status = CARD_E_READ_DATA;
+    }
+    else
+    {
+      try_cnt = 100;
+      mmc_select();
+      do
       {
-        //Wait while busy
+        mmc_rx_datablock(buffer,0xfe);
+        buffer += 512;
+      }while(--cnt);
+      if (command == MMC_CMD18)
+      {
+        mmc_tx_command(MMC_CMD12,0x00000000,0xff);	/* STOP_TRANSMISSION */
+        while(mmc_spi_rxtx_byte(0xff) != 0xff)
+        {
+          //Wait while busy
+        }
       }
+      mmc_deselect();
+      status = cnt ? CARD_E_READ_DATA : CARD_E_OK;
     }
   }
-
-  mmc_deselect();
-  status = cnt ? CARD_E_READ_DATA : CARD_E_OK;
   return status;
 }/*}}}*/
 uint8_t mmc_write(uint32_t sector, uint8_t * buffer, uint8_t cnt)/*{{{*/
 {
   uint8_t status = 0x00;
-  uint8_t r1 = 0xff;
-  uint16_t try_cnt = 0;
 
   if (!cnt) 
   {
@@ -368,38 +412,54 @@ uint8_t mmc_write(uint32_t sector, uint8_t * buffer, uint8_t cnt)/*{{{*/
   {
     sector *= 512;	/* Convert to byte address if needed */
   }
-  try_cnt = 10;
-  uint8_t command = cnt > 1 ? MMC_CMD25 : MMC_CMD24;
-  uint8_t token = cnt > 1 ?  0xfc : 0xfe;
-  do
+  if (status == 0x00 )
   {
-    r1 = mmc_tx_command(command,sector,0xff);
-  } while((r1 != 0x00) && --try_cnt);
-  if(try_cnt == 0)
-  {
-    status = CARD_E_WRITE_DATA;
-  }
-  else
-  {
-    mmc_select();
+    uint8_t r1 = 0xff;
+    uint16_t try_cnt = 10;
+    uint8_t command = cnt > 1 ? MMC_CMD25 : MMC_CMD24;
+    uint8_t token = cnt > 1 ?  0xfc : 0xfe;
     do
     {
-      mmc_tx_datablock(buffer,token);
-      buffer += 512;
-    } while(--cnt);
-    if(command == MMC_CMD25)
+      r1 = mmc_tx_command(command,sector,0xff);
+    } while((r1 != 0x00) && --try_cnt);
+    if(try_cnt == 0)
     {
-      if (mmc_tx_datablock(0,0xfd))
-      {
-        cnt = 1;	/* STOP_TRAN token */
-      }
-
+      status = CARD_E_WRITE_DATA;
     }
-    mmc_deselect();
+    else
+    {
+      mmc_select();
+      do
+      {
+        mmc_tx_datablock(buffer,token);
+        buffer += 512;
+      } while(--cnt);
+      if(command == MMC_CMD25)
+      {
+        if (mmc_tx_datablock(0,0xfd))
+        {
+          cnt = 1;	/* STOP_TRAN token */
+        }
+
+      }
+      mmc_deselect();
+    }
   }
   return status;
 }/*}}}*/
 
+uint8_t mmc_status(void)/*{{{*/
+{
+  return g_card_status;
+}/*}}}*/
+uint8_t mmc_csd(uint8_t * csd)/*{{{*/
+{
+  return mmc_rx_cxd(MMC_CMD9,csd);
+}/*}}}*/
+uint8_t mmc_cid(uint8_t * cid)/*{{{*/
+{
+  return mmc_rx_cxd(MMC_CMD10,cid);
+}/*}}}*/
 
 
 

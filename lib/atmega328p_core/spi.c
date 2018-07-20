@@ -70,21 +70,10 @@ void spi_tx(uint8_t * data, uint8_t n_value)/*{{{*/
 void spi_rx(uint8_t * data, uint8_t n_value)/*{{{*/
 {
   uint8_t k = 0;
-  print("\nold: ");
-  for(k = 0; k < 10; ++k)
-  {
-    print(" %xb ",data[k]);
-  }
-  print("\nnew: ");
   for(k = 0; k < n_value ; ++k)
   {
     data[k] = spi_rx_byte();
-    if(k < 10)
-    {
-    print(" %xb ",data[k]);
-    }
   }
-  print("\n");
 }/*}}}*/
 void spi_rxtx(uint8_t * data, uint8_t n_value)/*{{{*/
 {

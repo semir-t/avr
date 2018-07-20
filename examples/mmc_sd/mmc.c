@@ -217,17 +217,16 @@ uint8_t mmc_tx_command(uint8_t command, uint32_t arg, uint8_t crc)/*{{{*/
   return status;
 }/*}}}*/
 
-uint8_t mmc_read(uint32_t sector, uint8_t * buffer)/*{{{*/
+uint8_t mmc_read(uint32_t sector, uint8_t * buffer, uint8_t cnt)/*{{{*/
 {
   uint8_t status = 0x00;
   uint8_t command_status = 0xff;
   uint8_t try_cnt = 0;
 
-  /* if (!count) */
-  /* { */
-    /* print("RES_PARERR\n"); */
-    /* return RES_PARERR; */
-  /* } */
+  if (!cnt)
+  {
+    status = CARD_E_PARAMETER;
+  }
   if (g_card_status & CARD_S_NO_INIT) 
   {
     status = CARD_E_NOT_READY;
@@ -237,12 +236,12 @@ uint8_t mmc_read(uint32_t sector, uint8_t * buffer)/*{{{*/
     sector = sector << 9;	/* Convert to byte address if needed (*512)*/
   }
   try_cnt = 10;
+  uint8_t command = cnt > 1 ? MMC_CMD18 : MMC_CMD17;
   do
   {
-    command_status = mmc_tx_command(MMC_CMD17,sector,0xff);
+    command_status = mmc_tx_command(command,sector,0xff);
     --try_cnt;  
   } while((command_status != 0x00) && try_cnt);
-
   if(try_cnt == 0)
   {
     //READ_ONE_SECTOR_ERROR
@@ -264,15 +263,26 @@ uint8_t mmc_read(uint32_t sector, uint8_t * buffer)/*{{{*/
     else
     {
       uint16_t k = 0;
-      for (k = 0; k < 512; ++k)
+      uint16_t n = 0;
+      do
       {
-        buffer[k] = mmc_spi_rxtx_byte(0xff);
+        for (k = 0; k < 512; ++k)
+        {
+          buffer[n + k] = mmc_spi_rxtx_byte(0xff);
+        }
+        //Send dummy CRC bytes
+        mmc_spi_rxtx_byte(0xff);
+        mmc_spi_rxtx_byte(0xff);
+        n += 512;
+      } while(--cnt);
+      if (command == MMC_CMD18)
+      {
+        mmc_tx_command(MMC_CMD12,0x00000000,0xff);	/* STOP_TRANSMISSION */
       }
-      //Send dummy CRC bytes
-      mmc_spi_rxtx_byte(0xff);
-      mmc_spi_rxtx_byte(0xff);
+
     }
     mmc_deselect();
+    status = cnt ? CARD_E_READ_DATA : CARD_E_OK;
   }
   return status;
 }/*}}}*/

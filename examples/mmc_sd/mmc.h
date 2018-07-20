@@ -28,7 +28,7 @@
 #define CARD_S_PROTECT		                  0x04	/* Write protected */
 /*}}}*/
 /*{{{ SD error*/
-#define CARD_E_CLEAN                        0x00
+#define CARD_E_OK                           0x00
 #define CARD_E_PARAMETER                    0x01
 #define CARD_E_NOT_READY                    0x02
 #define CARD_E_WRITE_PROTECT                0x03
@@ -40,7 +40,7 @@
 uint8_t mmc_init(void);
 uint8_t mmc_tx_command(uint8_t command, uint32_t arg, uint8_t crc);
 
-uint8_t mmc_read(uint32_t sector, uint8_t * buffer);
+uint8_t mmc_read(uint32_t sector, uint8_t * buffer,uint8_t cnt);
 uint8_t mmc_write(uint32_t sector, uint8_t * buffer);
 
 uint8_t mmc(void);

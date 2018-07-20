@@ -122,9 +122,35 @@ static uint8_t mmc_tx_datablock(uint8_t * buffer, uint8_t token)/*{{{*/
   }
   return status;
 }/*}}}*/
-static uint8_t mmc_tx_datablock(uint8_t * buffer, uint8_t token)/*{{{*/
+static uint8_t mmc_rx_datablock(uint8_t * buffer, uint8_t token)/*{{{*/
 {
 
+  uint8_t status = 0x00;
+  uint8_t command_status = 0xff;
+  uint8_t try_cnt = 100;
+  //token 0xfe
+  while (mmc_spi_rxtx_byte(0xff) != token && try_cnt)
+  {
+    --try_cnt;
+  }
+  if(try_cnt == 0)
+  {
+    //DATA CAN'T BE READ 
+    status = CARD_E_READ_DATA;
+  }
+  else
+  {
+    uint16_t k = 0;
+    for (k = 0; k < 512; ++k)
+    {
+      buffer[k] = mmc_spi_rxtx_byte(0xff);
+    }
+    //Send dummy CRC bytes
+    mmc_spi_rxtx_byte(0xff);
+    mmc_spi_rxtx_byte(0xff);
+  }
+
+  
 }/*}}}*/
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -171,36 +197,36 @@ uint8_t mmc_init(void)/*{{{*/
     }
     /* if (mmc_tx_command(MMC_CMD8,0x1aa,0x87) != 1) */
     /* { */
-      /* Is the card SDv2? */
-      //NOT WORKING
-      /* mmc_select(); */
-      /* uint8_t n = 0; */
-      /* for (n = 0; n < 4; n++) */
-      /* { */
-      /*   command_status[n] = mmc_spi_rxtx_byte(0xff);	/1* Get trailing return value of R7 resp *1/ */
-      /* } */
-      /* mmc_deselect(); */
-      /* if (command_status[2] == 0x01 && command_status[3] == 0xAA) */
-      /* { */	
-      /*   /1* The card can work at vdd range of 2.7-3.6V *1/ */
-      /*   k = 100; */
-      /*   while (--k && mmc_tx_command(MMC_ACMD41, 1UL << 30,0xff)) */
-      /*   { */
-      /*     /1* Wait for leaving idle state (ACMD41 with HCS bit) *1/ */
-      /*     delay_ms(1); */
-      /*   } */
-      /*   if (k && mmc_tx_command(MMC_CMD58,0,0xff) == 0) */
-      /*   { */	
-      /*     /1* Check CCS bit in the OCR *1/ */
-      /*     mmc_select(); */
-      /*     for (n = 0; n < 4; n++) */
-      /*     { */
-      /*       command_status[n] = mmc_spi_rxtx_byte(0xff); */
-      /*     } */
-      /*     mmc_deselect(); */
-      /*     card_type = (command_status[0] & 0x40) ? CT_SD2 | CT_BLOCK : CT_SD2;	/1* Check if the card is SDv2 *1/ */
-      /*   } */
-      /* } */
+    /* Is the card SDv2? */
+    //NOT WORKING
+    /* mmc_select(); */
+    /* uint8_t n = 0; */
+    /* for (n = 0; n < 4; n++) */
+    /* { */
+    /*   command_status[n] = mmc_spi_rxtx_byte(0xff);	/1* Get trailing return value of R7 resp *1/ */
+    /* } */
+    /* mmc_deselect(); */
+    /* if (command_status[2] == 0x01 && command_status[3] == 0xAA) */
+    /* { */	
+    /*   /1* The card can work at vdd range of 2.7-3.6V *1/ */
+    /*   k = 100; */
+    /*   while (--k && mmc_tx_command(MMC_ACMD41, 1UL << 30,0xff)) */
+    /*   { */
+    /*     /1* Wait for leaving idle state (ACMD41 with HCS bit) *1/ */
+    /*     delay_ms(1); */
+    /*   } */
+    /*   if (k && mmc_tx_command(MMC_CMD58,0,0xff) == 0) */
+    /*   { */	
+    /*     /1* Check CCS bit in the OCR *1/ */
+    /*     mmc_select(); */
+    /*     for (n = 0; n < 4; n++) */
+    /*     { */
+    /*       command_status[n] = mmc_spi_rxtx_byte(0xff); */
+    /*     } */
+    /*     mmc_deselect(); */
+    /*     card_type = (command_status[0] & 0x40) ? CT_SD2 | CT_BLOCK : CT_SD2;	/1* Check if the card is SDv2 *1/ */
+    /*   } */
+    /* } */
     /* } */ 
     else
     {
@@ -301,42 +327,23 @@ uint8_t mmc_read(uint32_t sector, uint8_t * buffer, uint8_t cnt)/*{{{*/
   {
     try_cnt = 100;
     mmc_select();
-    while (mmc_spi_rxtx_byte(0xff)!= 0xfe && try_cnt)
+    do
     {
-      --try_cnt;
-    }
-    if(try_cnt == 0)
+      mmc_rx_datablock(buffer,0xfe);
+      buffer += 512;
+    }while(--cnt);
+    if (command == MMC_CMD18)
     {
-      //DATA CAN'T BE READ 
-      status = CARD_E_READ_DATA;
-    }
-    else
-    {
-      uint16_t k = 0;
-      uint16_t n = 0;
-      do
+      mmc_tx_command(MMC_CMD12,0x00000000,0xff);	/* STOP_TRANSMISSION */
+      while(mmc_spi_rxtx_byte(0xff) != 0xff)
       {
-        for (k = 0; k < 512; ++k)
-        {
-          buffer[n + k] = mmc_spi_rxtx_byte(0xff);
-        }
-        //Send dummy CRC bytes
-        mmc_spi_rxtx_byte(0xff);
-        mmc_spi_rxtx_byte(0xff);
-        n += 512;
-      } while(--cnt);
-      if (command == MMC_CMD18)
-      {
-        mmc_tx_command(MMC_CMD12,0x00000000,0xff);	/* STOP_TRANSMISSION */
-        while(mmc_spi_rxtx_byte(0xff) != 0xff)
-        {
-          //Wait while busy
-        }
+        //Wait while busy
       }
     }
-    mmc_deselect();
-    status = cnt ? CARD_E_READ_DATA : CARD_E_OK;
   }
+
+  mmc_deselect();
+  status = cnt ? CARD_E_READ_DATA : CARD_E_OK;
   return status;
 }/*}}}*/
 uint8_t mmc_write(uint32_t sector, uint8_t * buffer, uint8_t cnt)/*{{{*/

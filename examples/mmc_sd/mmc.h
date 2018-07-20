@@ -41,7 +41,7 @@ uint8_t mmc_init(void);
 uint8_t mmc_tx_command(uint8_t command, uint32_t arg, uint8_t crc);
 
 uint8_t mmc_read(uint32_t sector, uint8_t * buffer,uint8_t cnt);
-uint8_t mmc_write(uint32_t sector, uint8_t * buffer);
+uint8_t mmc_write(uint32_t sector, uint8_t * buffer, uint8_t cnt);
 
 uint8_t mmc(void);
 

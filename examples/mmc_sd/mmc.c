@@ -76,6 +76,56 @@ static void mmc_power_off(void)/*{{{*/
   /* Trun socket power off (nothing to do if no power controls) */
   /* To be filled */
 }/*}}}*/
+static uint8_t mmc_tx_datablock(uint8_t * buffer, uint8_t token)/*{{{*/
+{
+  uint8_t status = CARD_E_OK;
+  uint8_t r1 = 0xff;
+
+  mmc_spi_rxtx_byte(token); //Send start/stop token
+  if(token != 0xfd )
+  {
+    uint16_t k = 0;
+    for (k = 0; k < 512; ++k)
+    {
+#if MMC_DEBUG
+      if((k % 8 == 0))
+      {
+        print("\n%d. ",k/8);
+      }
+      print(" %xb ",buffer[k]);
+
+#endif
+      mmc_spi_rxtx_byte(buffer[k]);
+    }
+#if MMC_DEBUG 
+    print("\n");
+#endif
+    //Send dummy CRC bytes
+    mmc_spi_rxtx_byte(0xff);
+    mmc_spi_rxtx_byte(0xff);
+    r1 = mmc_spi_rxtx_byte(0xff);
+    if((r1 & 0x1f) != 0x05)
+    {
+      //READ_ONE_SECTOR_ERROR
+      status = CARD_E_WRITE_DATA;
+    }
+
+  }
+  else
+  {
+    //dummy byte
+    mmc_spi_rxtx_byte(0xff);
+  }
+  while(mmc_spi_rxtx_byte(0xff) != 0xff)
+  {
+    //Wait while busy
+  }
+  return status;
+}/*}}}*/
+static uint8_t mmc_tx_datablock(uint8_t * buffer, uint8_t token)/*{{{*/
+{
+
+}/*}}}*/
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //Public functions
@@ -278,32 +328,33 @@ uint8_t mmc_read(uint32_t sector, uint8_t * buffer, uint8_t cnt)/*{{{*/
       if (command == MMC_CMD18)
       {
         mmc_tx_command(MMC_CMD12,0x00000000,0xff);	/* STOP_TRANSMISSION */
+        while(mmc_spi_rxtx_byte(0xff) != 0xff)
+        {
+          //Wait while busy
+        }
       }
-
     }
     mmc_deselect();
     status = cnt ? CARD_E_READ_DATA : CARD_E_OK;
   }
   return status;
 }/*}}}*/
-uint8_t mmc_write(uint32_t sector, uint8_t * buffer)/*{{{*/
+uint8_t mmc_write(uint32_t sector, uint8_t * buffer, uint8_t cnt)/*{{{*/
 {
   uint8_t status = 0x00;
   uint8_t r1 = 0xff;
   uint16_t try_cnt = 0;
 
-  /* if (!count) */ 
-  /* { */
-  /* return RES_PARERR; */
-  /* } */
+  if (!cnt) 
+  {
+    status = CARD_E_PARAMETER;
+  }
   if (g_card_status & CARD_S_NO_INIT) 
   {
-    /* return RES_NOTRDY; */
     status = CARD_E_NOT_READY;
   }
   if (g_card_status & CARD_S_PROTECT )
   {
-    /* return RES_WRPRT; */
     status = CARD_E_WRITE_PROTECT;
   }
   if (!(g_card_type & CT_BLOCK))
@@ -311,9 +362,11 @@ uint8_t mmc_write(uint32_t sector, uint8_t * buffer)/*{{{*/
     sector *= 512;	/* Convert to byte address if needed */
   }
   try_cnt = 10;
+  uint8_t command = cnt > 1 ? MMC_CMD25 : MMC_CMD24;
+  uint8_t token = cnt > 1 ?  0xfc : 0xfe;
   do
   {
-    r1 = mmc_tx_command(MMC_CMD24,sector,0xff);
+    r1 = mmc_tx_command(command,sector,0xff);
   } while((r1 != 0x00) && --try_cnt);
   if(try_cnt == 0)
   {
@@ -322,40 +375,23 @@ uint8_t mmc_write(uint32_t sector, uint8_t * buffer)/*{{{*/
   else
   {
     mmc_select();
-    mmc_spi_rxtx_byte(0xfe); //Send start token
-    uint16_t k = 0;
-    for (k = 0; k < 512; ++k)
+    do
     {
-#if MMC_DEBUG
-      if((k % 8 == 0))
+      mmc_tx_datablock(buffer,token);
+      buffer += 512;
+    } while(--cnt);
+    if(command == MMC_CMD25)
+    {
+      if (mmc_tx_datablock(0,0xfd))
       {
-        print("\n%d. ",k/8);
+        cnt = 1;	/* STOP_TRAN token */
       }
-      print(" %xb ",buffer[k]);
 
-#endif
-      mmc_spi_rxtx_byte(buffer[k]);
-    }
-#if MMC_DEBUG 
-    print("\n");
-#endif
-    //Send dummy CRC bytes
-    mmc_spi_rxtx_byte(0xff);
-    mmc_spi_rxtx_byte(0xff);
-    r1 = mmc_spi_rxtx_byte(0xff);
-    if((r1 & 0x1f) != 0x05)
-    {
-      //READ_ONE_SECTOR_ERROR
-      status = CARD_E_WRITE_DATA;
-    }
-    while(mmc_spi_rxtx_byte(0xff) != 0xff)
-    {
     }
     mmc_deselect();
   }
   return status;
 }/*}}}*/
-
 
 
 

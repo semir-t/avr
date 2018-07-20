@@ -33,10 +33,9 @@ int main(void)
     uint16_t k = 0;
     for(k = 0; k < 1024;++k)
     {
-      buff[k] = 0x55; 
+      buff[k] = 0x51; 
     }
-    if(mmc_write(5000,buff) == 0);
-    if(mmc_write(5001,buff) == 0)
+    if(mmc_write(6550,buff,2) == 0)
     {
     print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
     print("WRITE TO SECTOR IS SUCCESSFUL\n");
@@ -56,7 +55,7 @@ int main(void)
     print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
     print("READ SECTOR TEST\n");
     print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
-    if(mmc_read(5000,buff,2) == 0)
+    if(mmc_read(6550,buff,2) == 0)
     {
       print("READ FROM SECTOR IS SUCCESSFUL\n");
       print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");

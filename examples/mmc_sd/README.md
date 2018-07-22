@@ -7,11 +7,36 @@ This is a easily portable low level MMC/SD card drive. Current version supports 
 
 With minor modifications, this library can be used as a core drive for Elm Chans [FatFS](http://elm-chan.org/fsw/ff/00index_e.html)
 
+## Porting drive to other MCU
+For this drive to work on other MCUs you need to redefine next macros
+
+```
+#define mmc_spi_init(prescaler)             spi_master_init(prescaler)
+#define mmc_spi_rxtx_byte(data)             spi_rxtx_byte(data)
+#define MMC_SS_LOW                          SPI_SS_LOW
+#define MMC_SS_HIGH                         SPI_SS_HIGH
+#define MMC_CLK_SLOW()                      spi_baudrate(SPI_BAUDRATE_PRESCALER_64)
+#define MMC_CLK_FAST()                      spi_baudrate(SPI_BAUDRATE_PRESCALER_16)
+```
+* mmc_spi_master_init(prescaler)
+** SPI peripheral should be initialize in MODE0 with low clock speed
+* mmc_spi_rxtx_byte(data)
+** Send data via SPI. This function returns value received via SPI
+* MMC_SS_LOW
+** Pull SS line LOW
+* MMC_SS HIGH_
+** Pull SS line HIGH
+* MMC_CLK_SLOW()
+** Change SPI clock speed (100 - 400 kHz)
+* MMC_CLK_FAST()
+** Change SPI clock speed to higher values which dependins on the MMC/SD card used
+
+
 ## Pinout
 Right photo shows the contact surface of the SDC/MMC. The MMC has seven contact pads. The SDC has nine contact pads that two additional contacts to the MMC. The three of the contacts are assigned for power supply, so that the number of effective signals are four (MMC) and six (SDC). Therfore the data transfer between the host and the card is done via a synchronous serial interface.
 
-![sd_pinout](docs/sdmeg)
-<div style="text-align:center"><img src ="..." /></div>
+![pinout](docs/sdmm_contact.jpeg)
+
 The working supply voltage range is indicated by the operation conditions register (OCR) and it should be read and comfirmed the operating voltage range at card initialization. However, the supply voltage can also be fixed to 3.0 to 3.3 volts withouth any confirmation because the all MMC/SDCs work at 2.7 to 3.6 volts at least. Do not supply 5.0 volts to the card, or the card is damaged instantly. The current consumption on write operation can reach up to some ten miliamperes, so that the host system should consider to supply 100 miliamperes to the card.
 
 ## SPI mode
@@ -70,7 +95,7 @@ Because ACMD41 instead of CMD1 is recommended for SDC, trying ACMD41 first and r
 The SCLK rate should be changed to fast as possible to maximize the read/write performance. The TRAN_SPEED field in the CSD register indicates the maximum clock rate of the card. The maximum clock rate is 20MHz for MMC, 25MHz for SDC in most case. Note that the clock rate will able to be fixed to 20/25MHz in SPI mode because there is no open-drain condition that restricts the clock rate.
 
 ## Data Transfer
-###Data Packet and Data Response
+### Data Packet and Data Response
 
 In a transaction with data transfer, one or more data blocks will be sent/received after command response. The data block is transferred as a data packet that consist of Token, Data Block and CRC. The format of the data packet is showing in image and there are three data tokens. Stop Tran token is to terminate a multiple block write transaction, it is used as single byte packet without data block and CRC.
 
@@ -81,13 +106,13 @@ The argument specifies the location to start to read in unit of byte or block. T
 
 ![rs](docs/rs.png)
 
-###Multiple Block Read
+### Multiple Block Read
 
 The CMD18 is to read multiple blocks in sequense from the specified location. The read operation continues as open-ended. To terminate the transaciton, send a CMD12 to the card. The received byte immediataly following CMD12 is a stuff byte, it should be discarded before receive the response of the CMD12. For MMC, if number of transfer blocks has been sepecified by CMD23 prior to CMD18, the read transaction is initiated as a pre-defined multiple block transfer and the read operation is terminated at last block transfer.
 
 ![rm](docs/rm.png)
 
-###Single Block Write
+### Single Block Write
 
 The Single Block Write writes a block to the card. After a CMD24 is accepted, the host controller sends a data packet to the card. The packet format is same as block read operations. Most cards cannot change write block size and it is fixed to 512. The CRC field can have any fixed value unless the CRC function is enabled. The card responds a Data Response immediataly following the data packet from the host. The Data Response trails a busy flag and host controller must wait until the card goes ready.
 
@@ -95,14 +120,14 @@ In principle of the SPI mode, the CS signal must be kept asserted during a trans
 
 ![ws](docs/ws.png)
 
-###Multiple Block Write
+### Multiple Block Write
 
 The Multiple Block Read command writes multiple blocks in sequense from the specified location. After a CMD25 is accepted, the host controller sends one or more data packets to the card. The packet format is same as block read operations except for Data Token. The write operation continues until terminated with a Stop Tran token. The busy flag will output after each data block and Stop Tran token. For MMC, the number of blocks to write can be pre-defined by CMD23 prior to CMD25 and the write transaction is terminated at last data block. For SDC, number of sectors to pre-erased at start of write transaction can be specified by ACMD23 prior to CMD25. A Stop Tran token is always required to treminate the write transaction. It can also be terminated at smaller or larger than pre-erased blocks but the content of the pre-erased and not transferred blocks are undefined.
 
 ![wm](docs/wm.png)
 
 
-###Reading CSD and CID
+### Reading CSD and CID
 
 These are same as Single Block Read except for the data block length. The CSD and CID are sent to the host as 16 byte data block. For details of the CMD, CID and OCR, please refer to the MMC/SDC specs.
 ## Authors
@@ -114,4 +139,5 @@ These are same as Single Block Read except for the data block length. The CSD an
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
 
 
-
+##Acknowledgments
+* Most of the information found in this README can be found on Elm Chans [FatFS](http://elm-chan.org/fsw/ff/00index_e.html) site

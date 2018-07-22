@@ -18,18 +18,12 @@ For this drive to work on other MCUs you need to redefine next macros
 #define MMC_CLK_SLOW()                      spi_baudrate(SPI_BAUDRATE_PRESCALER_64)
 #define MMC_CLK_FAST()                      spi_baudrate(SPI_BAUDRATE_PRESCALER_16)
 ```
-* mmc_spi_master_init(prescaler)
-** SPI peripheral should be initialize in MODE0 with low clock speed
-* mmc_spi_rxtx_byte(data)
-** Send data via SPI. This function returns value received via SPI
-* MMC_SS_LOW
-** Pull SS line LOW
-* MMC_SS HIGH_
-** Pull SS line HIGH
-* MMC_CLK_SLOW()
-** Change SPI clock speed (100 - 400 kHz)
-* MMC_CLK_FAST()
-** Change SPI clock speed to higher values which dependins on the MMC/SD card used
+* mmc_spi_master_init(prescaler) - SPI peripheral should be initialize in MODE0 with low clock speed
+* mmc_spi_rxtx_byte(data) -  Send data via SPI. This function returns value received via SPI
+* MMC_SS_LOW - Pull SS line LOW
+* MMC_SS_HIGH - Pull SS line HIGH
+* MMC_CLK_SLOW() - Change SPI clock speed (100 - 400 kHz)
+* MMC_CLK_FAST() - Change SPI clock speed to higher values which dependins on the MMC/SD card used
 
 
 ## Pinout
@@ -139,5 +133,5 @@ These are same as Single Block Read except for the data block length. The CSD an
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
 
 
-##Acknowledgments
+## Acknowledgments
 * Most of the information found in this README can be found on Elm Chans [FatFS](http://elm-chan.org/fsw/ff/00index_e.html) site

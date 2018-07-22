@@ -15,8 +15,6 @@ int main(void)
   usart_init(USART_BAUDRATE_115200);
   print_init(usart_tx_byte);
 
-
-
   FIL fil;        /* File object */
   char line[100]; /* Line buffer */
   FRESULT fr;     /* FatFs return code */
@@ -26,31 +24,44 @@ int main(void)
   f_mount(&FatFs, "", 0);
 
   /* Open a text file */
-  fr = f_open(&fil, "hello.txt", FA_READ | FA_WRITE);
+  fr = f_open(&fil, "helloo.txt",FA_CREATE_ALWAYS | FA_WRITE | FA_READ);
   if (fr)
   {
     print("SYS-> OPEN ERROR\n");
     return (int)fr;
   }
   uint8_t k = 0;
-  if((k = f_puts("This is working!",&fil)) == -1)
+  uint8_t n = 0;
+  for( n = 0; n < 20; ++n )
   {
-    print("SYS-> WRITE ERROR\n");
-  }
-  else
-  {
-    print("SYS-> WRITE DONE [%d]\n",k);
+    if((k = f_puts("Hello world!\n",&fil)) == -1)
+    {
+      print("SYS-> WRITE ERROR\n");
+    }
+    else
+    {
+      print("SYS-> WRITE DONE [%d]\n",k);
+    }
   }
 
-  print("SYS-> READ LINE\n");
   /* Read all lines and display it */
+  f_lseek(&fil,0);
+  print("SYS-> READ LINE\n");
   while (f_gets(line, sizeof line, &fil)) {
     print("%s\n",line);
   }
 
 
   /* Close the file */
-  /* f_close(&fil); */
+  if(f_close(&fil) == FR_OK)
+  {
+    print("CLOSE FILE SUCCESS\n");
+  }
+  else
+  {
+    print("CLOSE FILE FAIL\n");
+
+  }
 
 
   DDRB = 0xFF; //Define PORTB as output

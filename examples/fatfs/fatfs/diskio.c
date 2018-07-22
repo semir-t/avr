@@ -74,26 +74,16 @@ DRESULT disk_write (
 /* Miscellaneous Functions                                               */
 /*-----------------------------------------------------------------------*/
 
-#if _USE_IOCTL
+/* #if _USE_IOCTL */
 DRESULT disk_ioctl (
 	BYTE pdrv,		/* Physical drive nmuber (0..) */
 	BYTE cmd,		/* Control code */
 	void *buff		/* Buffer to send/receive control data */
 )
 {
-	switch (pdrv) {
-#ifdef DRV_CFC
-	case DRV_CFC :
-		return cf_disk_ioctl(cmd, buff);
-#endif
-#ifdef DRV_MMC
-	case DRV_MMC :
-		return mmc_disk_ioctl(cmd, buff);
-#endif
-	}
-	return RES_PARERR;
+  return mmc_ioctl(cmd, buff);
 }
-#endif
+/* #endif */
 
 DWORD get_fattime (void)
 {
@@ -116,12 +106,11 @@ DWORD get_fattime (void)
   DWORD minute = 0;
   DWORD second = 0;
   DWORD time =  ((year & 0x7f) << 25)  |
-                ((month & 0x0f) << 21) |
-                ((day & 0x1f) << 16)   |
-                ((hour & 0x1f) << 11)  |
-                ((minute & 0x3f) << 5) |
-                ((second & 0x1f));
-  print("time -> %x",time);
+    ((month & 0x0f) << 21) |
+    ((day & 0x1f) << 16)   |
+    ((hour & 0x1f) << 11)  |
+    ((minute & 0x3f) << 5) |
+    ((second & 0x1f));
   return time;
 }
 /*-----------------------------------------------------------------------*/

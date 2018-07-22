@@ -71,7 +71,7 @@ uint8_t mmc_read(uint32_t sector, uint8_t * buffer,uint8_t cnt);
  * \param cnt Number of sectors to write 
  * \return Write status 
  */
-uint8_t mmc_write(uint32_t sector, uint8_t * buffer, uint8_t cnt);
+uint8_t mmc_write(uint32_t sector,const uint8_t * buffer, uint8_t cnt);
 
 /*! \brief Get SD card status
  *
@@ -93,4 +93,11 @@ uint8_t mmc_csd(uint8_t * csd);
  */
 uint8_t mmc_cid(uint8_t * cid);
 
+/*! \brief Control device dependent functions
+ *
+ * \param command Control code 
+ * \param buffer Buffer to send/receive control data 
+ * \return Device result status 
+ */
+DRESULT mmc_ioctl( BYTE command, void * buffer);
 #endif /* ifndef __MMC_H */

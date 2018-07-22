@@ -1,6 +1,6 @@
 ##Ignore 
 data/
-docs/
+# docs/
 projects/
 *.pdf
 

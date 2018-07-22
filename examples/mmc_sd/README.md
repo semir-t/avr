@@ -18,11 +18,13 @@ The working supply voltage range is indicated by the operation conditions regist
 ### Activating MMC/SD card
 SPI bus can have multiple slave devices. Device selection is performed by pulling SS(CS) pin LOW. (In idle state this pin is pulled HIGH).
 This is also the case when we use MMC/SD cards in SPI mode. When we want to select MMC/SD card, we have to pull SS(CS) line LOW. But, before doing this we have to activate MMC/SD card. This is done byte sending 0xff through MOSI line while SS line is HIGH.
+
 Steps to take when selecting the MMC/SD card:
 * Pull SS line HIGH
 * Send 0xff via MOSI line
 * Pull SS line LOW
 * Check if MMC/SD card is busy
+
 Steps to take when deselecting the card:
 * Pull SS line HIGH
 

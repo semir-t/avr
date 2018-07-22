@@ -57,7 +57,7 @@ The CS signal must be driven high to low prior to send a command frame and held 
 
 ![cmd](docs/cmd.png)
 
-###SPI Command Set
+### SPI Command Set
 
 Each command is expressed in abbreviation like GO_IDLE_STATE or CMD<n>, <n> is the number of the command index and the value can be 0 to 63. Following table describes only commands that to be usually used for generic read/write and card initialization. For details on all commands, please refer to spec sheets from MMCA and SDA.
 

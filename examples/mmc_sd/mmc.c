@@ -38,23 +38,39 @@ static volatile uint8_t g_card_type;
 //Private functions
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-static void mmc_select(void)/*{{{*/
+static uint8_t mmc_wait_ready(uint16_t cnt)/*{{{*/
 {
-  MMC_SS_HIGH;
-  mmc_spi_rxtx_byte(0xff);
-  MMC_SS_LOW;
+  uint8_t status = 0x00;
+  do
+  {
+    status = mmc_spi_rxtx_byte(0xff);
+    delay_ms(1);
+  }
+  while (status != 0xff && --cnt);
+  return (status == 0xff) ? 1 : 0;
 }/*}}}*/
 static void mmc_deselect(void)/*{{{*/
 {
   MMC_SS_HIGH;
 }/*}}}*/
+static void mmc_select(void)/*{{{*/
+{
+  MMC_SS_HIGH;
+  mmc_spi_rxtx_byte(0xff);
+  MMC_SS_LOW;
+  if(mmc_wait_ready(500) != 1)
+  {
+    //Don't select the card if card is busy
+    mmc_deselect();
+  }
+}/*}}}*/
 static void mmc_power_on(void)/*{{{*/
 {
   /* Turn socket power on and wait for 10ms+ (nothing to do if no power controls) */
-	/* To be filled */
+  /* To be filled */
 
 
-	/* Enable SPI in MODE0 */
+  /* Enable SPI in MODE0 */
   mmc_spi_init(SPI_BAUDRATE_PRESCALER_64);
   mmc_deselect();
 }/*}}}*/

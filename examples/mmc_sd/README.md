@@ -63,11 +63,11 @@ Each command is expressed in abbreviation like GO_IDLE_STATE or CMD<n>, <n> is t
 
 ![cmd_set](docs/cmd_set.png)
 
-###SPI Response
+### SPI Response
 
 There are some command response formats, R1, R2, R3 and R7, depends on the command index. A byte of response, R1, is returned for most commands. The bit field of the R1 response is shown in right image, the value 0x00 means successful. When any error occured, corresponding status bit in the response will be set. The R3/R7 response (R1 + trailing 32-bit data) is for only CMD58 and CMD8.
 
-![cresp] (docs/cresp.png)
+![cresp](docs/cresp.png)
 
 Some commands take a time longer than NCR and it responds R1b. It is an R1 response followed by busy flag (DO is driven to low as long as internal process is in progress). The host controller should wait for end of the process until DO goes high (a 0xFF is received).
 

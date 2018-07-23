@@ -6,7 +6,7 @@ Collection of drives and examples for AVR MCUs.
 
 Main idea is to develop drives for different devices, sensors and etc. The goal is to have libraries who are  easily portable to other MCUs. Most of the stuff found here is tested and well documented.
 
-Most of the time I am using Arduino UNO (Atmega328p) for developing, so almost all core drives (SPI, USART, etc.) found here are written for this microcontroller. The main reason why I use Arduino platform because it is easier and faster to build a prototype. Even though I use this platform, entire code found here is based on low-level bare-metal C programming.
+Most of the time I am using Arduino UNO (Atmega328p) for developing, so almost all core drives (SPI, USART, etc.) found here are written for this microcontroller. I use Arduino platform because it is easier and faster to build a prototype. Even though I use this platform, entire code found here is based on low-level bare-metal C programming.
 
 
 ## Prerequisites

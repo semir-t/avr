@@ -51,9 +51,20 @@ uint8_t i2c_rx_data(uint8_t address, uint8_t * data, uint8_t cnt)/*{{{*/
       uint8_t k = 0;
       for( k = 0; (k < cnt) && (i2c_status != I2C_E_ADDRESS); ++k )
       {
-        TWCR = _BV(TWINT) | _BV(TWEN) | _BV(TWEA); //start transmision
+        if(k + 1 != cnt)
+        {
+          TWCR = _BV(TWINT) | _BV(TWEN) | _BV(TWEA); //start transmision
+        }
+        else
+        {
+          TWCR = _BV(TWINT) | _BV(TWEN); //start transmision
+        }
         while(!(TWCR & _BV(TWINT))); // wait until I2C master is done 
-        if((TWSR & I2C_S_MASK) != I2C_S_MR_DATA_ACK)
+        if( ( k + 1 != cnt) && (TWSR & I2C_S_MASK) != I2C_S_MR_DATA_ACK)
+        {
+          i2c_status = I2C_E_DATA;
+        }
+        else if (( k + 1 == cnt ) && (TWSR & I2C_S_MASK) != I2C_S_MR_DATA_NACK)
         {
           i2c_status = I2C_E_DATA;
         }

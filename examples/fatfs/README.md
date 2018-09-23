@@ -12,7 +12,6 @@ Steps to take to enable SDv1 cards:
 * Update mmc_ioctl() [mmc.c]
 
 Steps to take to enable SDv2 cards:
-* Update mmc_init() [mmc.c]
 * Update mmc_ioctl() [mmc.c]
 
 

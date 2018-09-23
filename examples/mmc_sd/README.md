@@ -3,7 +3,7 @@
 Low level MMC/SD card drive.
 
 ## About
-This is a easily portable low level MMC/SD card drive. Current version supports MMC and SDv1 cards, but only MMC was properly tested so there is no guarantee for SDv1 cards. This library contains basic functions for initializatiing MMC/SD card, and for reading/writing data to 512B sectors.
+This is a easily portable low level MMC/SD card drive. Current version supports all type of SD/MMC cards This library contains basic functions for initializatiing MMC/SD card, and for reading/writing data to 512B sectors.
 
 With minor modifications, this library can be used as a core drive for Elm Chans [FatFS](http://elm-chan.org/fsw/ff/00index_e.html)
 

@@ -23,8 +23,8 @@ int main(void)
   print("SYS-> WRITE_NO_INIT: [%xb]\n",mmc_write(1000,buffer,1));
   print("SYS-> READ_NO_INIT: [%xb]\n",mmc_read(1000,buffer,1));
   print("SYS-> SD_INIT: [%xb]\n",mmc_init());
-  print("SYS-> WRITE_NO_INIT: [%xb]\n",mmc_write(1000,buffer,1));
-  print("SYS-> READ_NO_INIT: [%xb]\n",mmc_read(1000,buffer,1));
+  print("SYS-> WRITE_INIT: [%xb]\n",mmc_write(1000,buffer,1));
+  print("SYS-> READ_INIT: [%xb]\n",mmc_read(1000,buffer,1));
   uint8_t csd[16];
   uint8_t cid[16];
   mmc_csd(csd);

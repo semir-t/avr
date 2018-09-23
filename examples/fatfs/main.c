@@ -21,13 +21,18 @@ int main(void)
 
 
   /* Register work area to the default drive */
-  f_mount(&FatFs, "", 0);
+  fr = f_mount(&FatFs, "", 0);
+  if (fr)
+  {
+    print("SYS-> MOUNT ERROR[%d]\n",fr);
+    return (int)fr;
+  }
 
   /* Open a text file */
   fr = f_open(&fil, "helloo.txt",FA_CREATE_ALWAYS | FA_WRITE | FA_READ);
   if (fr)
   {
-    print("SYS-> OPEN ERROR\n");
+    print("SYS-> OPEN ERROR[%d]\n",fr);
     return (int)fr;
   }
   uint8_t k = 0;
